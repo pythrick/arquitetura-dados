@@ -1,15 +1,17 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[40]:
+# In[75]:
 
 
 # Modules import
-from pprint import pprint
+import csv
 
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+
+from pprint import pprint
 
 from sklearn.model_selection import (
     train_test_split,
@@ -19,7 +21,10 @@ from sklearn.metrics import (
     classification_report,
     confusion_matrix,
     accuracy_score,
-    plot_confusion_matrix,
+    f1_score,
+    precision_score,
+    recall_score,
+    plot_confusion_matrix
 )
 from sklearn.linear_model import LogisticRegression
 from sklearn.neural_network import MLPClassifier
@@ -27,23 +32,23 @@ from sklearn.svm import SVC
 from numpy.random import RandomState
 
 
-# In[41]:
+# In[76]:
 
 
-# Suprime os warnings
+# Supressão de warnings
 import warnings
 
 warnings.filterwarnings("ignore")
 
 
-# In[42]:
+# In[77]:
 
 
 # Aumenta o número de linhas para visualização
 pd.set_option('display.max_rows', 200)
 
 
-# In[43]:
+# In[78]:
 
 
 RANDOM_NUM = 42
@@ -51,21 +56,24 @@ np.random.seed(42)
 RANDOM_STATE = RandomState(42)
 
 
-# In[63]:
+# In[79]:
 
 
 df = pd.read_csv("weight_lifting.csv", header=1)
+df.to_csv(r'outputs/original_database.csv', quoting=csv.QUOTE_NONNUMERIC)
 df.head()
 
 
-# In[64]:
+# ### Limpeza mínima da base de dados
+
+# In[80]:
 
 
 df.drop(columns=["user_name", "raw_timestamp_part_1", "raw_timestamp_part_2", "cvtd_timestamp", "new_window", "num_window"], inplace=True)
-df.dtypes
+# df.dtypes
 
 
-# In[65]:
+# In[81]:
 
 
 # Corrigindo campos com "#DIV/0!"
@@ -73,17 +81,25 @@ for col in df.columns:
     if df[col].dtype == object and col != "classe":
         df[col] = df[col].str.replace("#DIV/0!", "0")
         df[col] = df[col].astype(float)
-df.dtypes
+# df.dtypes
 
 
-# In[66]:
+# In[82]:
 
 
-# Corrigindo valores N/A 
+# Corrigindo valores N/A com a média
 df.fillna(df.mean(), inplace=True)
 
 
-# In[67]:
+# In[83]:
+
+
+df.to_csv(r'outputs/cleaned_database.csv', quoting=csv.QUOTE_NONNUMERIC)
+
+
+# ### Divisão entre base de treino e teste
+
+# In[84]:
 
 
 # Datasets
@@ -93,7 +109,9 @@ y = df.iloc[:, -1:]
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25,)
 
 
-# In[68]:
+# ### Descobrir os melhores parâmetros para os classificadores
+
+# In[71]:
 
 
 models_base = [
@@ -153,7 +171,7 @@ models_base = [
 # In[69]:
 
 
-# TRAIN AND PREDICT
+# Treinar e predizer com GridSearchCV
 models_base_predict = []
 for mb in models_base:
     model = GridSearchCV(mb["classifier"], mb["parameters"], n_jobs=-1, verbose=1)
@@ -172,9 +190,43 @@ for mb in models_base:
     models_base_predict.append(result)
 
 
-# ### Evaluate predictions
+# ### Treinar e predizer com os parâmetros ajustados
 
-# In[70]:
+# In[85]:
+
+
+models_base = [
+    ('LR', LogisticRegression(**{
+        'C': 0.01,
+        'fit_intercept': True,
+        'multi_class': 'ovr',
+        'penalty': 'l2',
+        'solver': 'newton-cg'})),
+    ('SVM', SVC(**{
+        'C': 10,
+        'gamma': 1e-05,
+        'kernel': 'rbf',
+        'probability': True})),
+    ('MPL', MLPClassifier(**{
+        'alpha': 0.0001,
+        'hidden_layer_sizes': (100,),
+        'solver': 'adam'}))
+]
+models_base_predict = []
+for result in models_base:
+    name, model = result
+    model.fit(X_train, y_train)
+    predict = model.predict(X_test)
+    models_base_predict.append({
+        "name": name,
+        "model": model,
+        "predict": predict
+    })
+
+
+# ### Avaliar predições
+
+# In[86]:
 
 
 
@@ -182,6 +234,9 @@ def plot_results():
     for result in models_base_predict:
         print(f"Model: {result['name']}")
         print(f"Accuracy: {round(accuracy_score(y_test, result['predict']), 4)}")
+        print(f"F1: {round(f1_score(y_test, result['predict'], average='macro'), 4)}")
+        print(f"Precision: {round(precision_score(y_test, result['predict'], average='macro'), 4)}")
+        print(f"Recall: {round(recall_score(y_test, result['predict'], average='macro'), 4)}")
         print()
         print(confusion_matrix(y_test, result["predict"]))
         print()
@@ -192,7 +247,7 @@ def plot_results():
         print("--------------------------------------------")
 
 
-# In[71]:
+# In[87]:
 
 
 plot_results()
