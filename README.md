@@ -2,14 +2,13 @@
 
 Base de dados escolhida: [Weight Lifting Exercises monitored with Inertial Measurement Units Data Set](http://archive.ics.uci.edu/ml/datasets/Weight+Lifting+Exercises+monitored+with+Inertial+Measurement+Units)
 
+Planilha de acompanhamento de evolução do projeto: [Google Planilhas](https://docs.google.com/spreadsheets/d/184gHuyj6E1sgRdBUTqfDyXch1FIS4GkPE63yPa21cZk/edit?usp=sharing) 
 
 ## TODO
 1. Escolher 3 algorimos dos tipos:
     * Regressão
     * Árvore de decisão
     * Rede Neural
-    - Fazer o uso de cross-validation na base completa (treino e teste), para ter uma ideia inicial de quanto ele pode chegar,
-    o máximo que ele poderia aprender com aqueles dados.
 2. Executar as predições para cada modelo e salvar os resultados (estado inicial)
     - O estado mais próximo do dado de origem
     - Realizar apenas a mínima adequação da base para rodar os modelos
@@ -62,3 +61,24 @@ Base de dados escolhida: [Weight Lifting Exercises monitored with Inertial Measu
     - Entregar em formato PDF
     - Não quer muitas páginas, o mais sucinto/objetivo possível
     - De modo que seja fácil para os demais colegas avaliar / reproduzir
+
+## Requisitos
+```shell script
+Python 3.5+
+```
+
+## Instalação
+```shell script
+python3 -m venv .venv
+source .venv/bin/activate
+python3 -m pip install -r requirements.txt
+```
+
+## Iniciar Jupyter Notebook
+```shell script
+jupyter notebook
+```
+
+Está configurado um hook que faz com que toda vez que um notebook é salvo, 
+é realizada sua exportação para script Python, facilitando a visualização das
+alterações via Pull Request.

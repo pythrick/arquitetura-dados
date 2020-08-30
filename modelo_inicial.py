@@ -1,9 +1,8 @@
-#%%
-import warnings
+#!/usr/bin/env python
+# coding: utf-8
 
-warnings.filterwarnings("ignore")
+# In[40]:
 
-#%%
 
 # Modules import
 from pprint import pprint
@@ -27,53 +26,65 @@ from sklearn.neural_network import MLPClassifier
 from sklearn.svm import SVC
 from numpy.random import RandomState
 
-#%%
+
+# In[41]:
+
+
+# Suprime os warnings
+import warnings
+
+warnings.filterwarnings("ignore")
+
+
+# In[42]:
+
+
+# Aumenta o número de linhas para visualização
+pd.set_option('display.max_rows', 200)
+
+
+# In[43]:
+
 
 RANDOM_NUM = 42
 np.random.seed(42)
 RANDOM_STATE = RandomState(42)
 
-#%%
+
+# In[63]:
+
 
 df = pd.read_csv("weight_lifting.csv", header=1)
-df = df.drop(columns=["user_name", "new_window", "cvtd_timestamp"])
+df.head()
+
+
+# In[64]:
+
+
+df.drop(columns=["user_name", "raw_timestamp_part_1", "raw_timestamp_part_2", "cvtd_timestamp", "new_window", "num_window"], inplace=True)
+df.dtypes
+
+
+# In[65]:
+
+
+# Corrigindo campos com "#DIV/0!"
+for col in df.columns:
+    if df[col].dtype == object and col != "classe":
+        df[col] = df[col].str.replace("#DIV/0!", "0")
+        df[col] = df[col].astype(float)
+df.dtypes
+
+
+# In[66]:
+
+
+# Corrigindo valores N/A 
 df.fillna(df.mean(), inplace=True)
-# df.fillna(0, inplace=True)
-df.dropna(inplace=True)
 
-# df.head()
-# df.groupby('classe').size()
 
-#%%
+# In[67]:
 
-columns = [
-    "kurtosis_picth_belt",
-    "kurtosis_yaw_belt",
-    "skewness_roll_belt.1",
-    "skewness_yaw_belt",
-    "kurtosis_roll_arm",
-    "kurtosis_picth_arm",
-    "kurtosis_yaw_arm",
-    "skewness_roll_arm",
-    "skewness_pitch_arm",
-    "skewness_yaw_arm",
-    "kurtosis_yaw_dumbbell",
-    "skewness_yaw_dumbbell",
-    "kurtosis_roll_forearm",
-    "kurtosis_picth_forearm",
-    "kurtosis_yaw_forearm",
-    "skewness_roll_forearm",
-    "skewness_pitch_forearm",
-    "skewness_yaw_forearm",
-    "max_yaw_forearm",
-    "min_yaw_forearm",
-    "amplitude_yaw_forearm",
-]
-for col in columns:
-    df[col] = df[col].astype(str)
-    df[col] = df[col].str.replace("#DIV/0!", "0")
-
-#%%
 
 # Datasets
 X = df.iloc[:, 0:-1]
@@ -82,12 +93,13 @@ y = df.iloc[:, -1:]
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25,)
 
 
-#%%
+# In[68]:
+
 
 models_base = [
     {
         "name": "LR",
-        "classifier": LogisticRegression(max_iter=4000),
+        "classifier": LogisticRegression(),
         "parameters": [
             {
                 "penalty": ["l2"],
@@ -99,21 +111,28 @@ models_base = [
             {
                 "penalty": ["elasticnet"],
                 "solver": ["saga"],
-                "C": [0.001],  # 0.01, 0.1, 1, 10, 100, 1000
+                "C": [0.001],
                 "fit_intercept": [True, False],
                 "multi_class": ["auto", "ovr", "multinomial"],
+                "l1_ratio": [0, 0.5, 1],
             },
         ],
     },
     {
         "name": "SVM",
-        "classifier": SVC(gamma="scale", probability=True),
+        "classifier": SVC(),
         "parameters": [
-            {"C": [0.1, 0.5, 1, 10, 100, 500, 1000], "kernel": ["poly"]},
+            {
+                "C": [0.1, 0.5, 1, 10, 100, 500, 1000],
+                "gamma": ["scale"],
+                "kernel": ["poly"],
+                "probability": [True],
+            },
             {
                 "C": [0.1, 0.5, 1, 10, 100, 500, 1000],
                 "gamma": [0.1, 0.001, 0.0001, 0.00001],
                 "kernel": ["rbf"],
+                "probability": [True],
             },
         ],
     },
@@ -131,7 +150,8 @@ models_base = [
 ]
 
 
-#%%
+# In[69]:
+
 
 # TRAIN AND PREDICT
 models_base_predict = []
@@ -152,11 +172,10 @@ for mb in models_base:
     models_base_predict.append(result)
 
 
-#%% md
+# ### Evaluate predictions
 
-### Evaluate predictions
+# In[70]:
 
-#%%
 
 
 def plot_results():
@@ -173,8 +192,14 @@ def plot_results():
         print("--------------------------------------------")
 
 
-#%%
+# In[71]:
+
 
 plot_results()
 
-#%%
+
+# In[ ]:
+
+
+
+
