@@ -24,7 +24,7 @@ from sklearn.metrics import (
     f1_score,
     precision_score,
     recall_score,
-    plot_confusion_matrix
+    plot_confusion_matrix,
 )
 from sklearn.linear_model import LogisticRegression
 from sklearn.neural_network import MLPClassifier
@@ -45,7 +45,7 @@ warnings.filterwarnings("ignore")
 
 
 # Aumenta o número de linhas para visualização
-pd.set_option('display.max_rows', 200)
+pd.set_option("display.max_rows", 200)
 
 
 # In[320]:
@@ -60,7 +60,7 @@ RANDOM_STATE = RandomState(42)
 
 
 df = pd.read_csv("weight_lifting.csv", header=1)
-df.to_csv(r'outputs/original_database.csv', quoting=csv.QUOTE_NONNUMERIC)
+df.to_csv(r"outputs/original_database.csv", quoting=csv.QUOTE_NONNUMERIC)
 df.head()
 
 
@@ -91,9 +91,8 @@ df.dtypes
 
 
 # Convertendo coluna "new_window" para booleano
-df['new_window'] = np.where(
-    df['new_window'].str.lower() == 'yes', 1, 0)
-df['new_window'] = df['new_window'].astype(int)
+df["new_window"] = np.where(df["new_window"].str.lower() == "yes", 1, 0)
+df["new_window"] = df["new_window"].astype(int)
 
 
 # In[326]:
@@ -121,7 +120,7 @@ print_unique(df)
 # In[328]:
 
 
-df.to_csv(r'outputs/cleaned_database.csv', quoting=csv.QUOTE_NONNUMERIC)
+df.to_csv(r"outputs/cleaned_database.csv", quoting=csv.QUOTE_NONNUMERIC)
 
 
 # ### Divisão entre base de treino e teste
@@ -223,29 +222,32 @@ for mb in models_base:
 
 
 models_base = [
-    ('LR', LogisticRegression(**{'C': 0.1,
-                     'fit_intercept': True,
-                     'multi_class': 'ovr',
-                     'penalty': 'l2',
-                     'solver': 'newton-cg'})),
-    ('SVM', SVC(**{'C': 10,
-                     'gamma': 1e-05,
-                     'kernel': 'rbf',
-                     'probability': True})),
-    ('MPL', MLPClassifier(**{'alpha': 0.0001,
-                     'hidden_layer_sizes': (5, 2),
-                     'solver': 'sgd'}))
+    (
+        "LR",
+        LogisticRegression(
+            **{
+                "C": 0.1,
+                "fit_intercept": True,
+                "multi_class": "ovr",
+                "penalty": "l2",
+                "solver": "newton-cg",
+            }
+        ),
+    ),
+    ("SVM", SVC(**{"C": 10, "gamma": 1e-05, "kernel": "rbf", "probability": True})),
+    (
+        "MPL",
+        MLPClassifier(
+            **{"alpha": 0.0001, "hidden_layer_sizes": (5, 2), "solver": "sgd"}
+        ),
+    ),
 ]
 models_base_predict = []
 for result in models_base:
     name, model = result
     model.fit(X_train, y_train)
     predict = model.predict(X_test)
-    models_base_predict.append({
-        "name": name,
-        "model": model,
-        "predict": predict
-    })
+    models_base_predict.append({"name": name, "model": model, "predict": predict})
 
 
 # ### Avaliar predições
@@ -253,14 +255,17 @@ for result in models_base:
 # In[333]:
 
 
-
 def plot_results():
     for result in models_base_predict:
         print(f"Model: {result['name']}")
         print(f"Accuracy: {round(accuracy_score(y_test, result['predict']), 4)}")
         print(f"F1: {round(f1_score(y_test, result['predict'], average='macro'), 4)}")
-        print(f"Precision: {round(precision_score(y_test, result['predict'], average='macro'), 4)}")
-        print(f"Recall: {round(recall_score(y_test, result['predict'], average='macro'), 4)}")
+        print(
+            f"Precision: {round(precision_score(y_test, result['predict'], average='macro'), 4)}"
+        )
+        print(
+            f"Recall: {round(recall_score(y_test, result['predict'], average='macro'), 4)}"
+        )
         print()
         print(confusion_matrix(y_test, result["predict"]))
         print()
@@ -278,7 +283,3 @@ plot_results()
 
 
 # In[ ]:
-
-
-
-

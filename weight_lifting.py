@@ -18,7 +18,7 @@ from sklearn.metrics import (
     f1_score,
     precision_score,
     recall_score,
-    plot_confusion_matrix
+    plot_confusion_matrix,
 )
 from sklearn.linear_model import LogisticRegression
 from sklearn.neural_network import MLPClassifier
@@ -35,20 +35,19 @@ RANDOM_NUM = 42
 np.random.seed(42)
 RANDOM_STATE = RandomState(42)
 
-class WeightLifting():
+
+class WeightLifting:
     def load_df(self) -> pd.DataFrame:
         df = pd.read_csv("weight_lifting.csv", header=1)
-        df.to_csv(r'outputs/original_database.csv', quoting=csv.QUOTE_NONNUMERIC)
+        df.to_csv(r"outputs/original_database.csv", quoting=csv.QUOTE_NONNUMERIC)
         return df
-
 
     def transform(self, df: pd.DataFrame) -> pd.DataFrame:
         df.drop(columns=["user_name", "cvtd_timestamp",], inplace=True)
 
         # Convertendo coluna "new_window" para booleano
-        df['new_window'] = np.where(
-            df['new_window'].str.lower() == 'yes', 1, 0)
-        df['new_window'] = df['new_window'].astype(int)
+        df["new_window"] = np.where(df["new_window"].str.lower() == "yes", 1, 0)
+        df["new_window"] = df["new_window"].astype(int)
 
         for col in df.columns[:-1]:
             # Corrigindo campos com "#DIV/0!"
@@ -62,16 +61,16 @@ class WeightLifting():
             else:
                 df[col] = df[col].replace(np.nan, "0")
 
-        df.to_csv(r'outputs/cleaned_database.csv', quoting=csv.QUOTE_NONNUMERIC)
+        df.to_csv(r"outputs/cleaned_database.csv", quoting=csv.QUOTE_NONNUMERIC)
         return df
 
-
-    def createTrainTest(
+    def create_train_test(
         self,
         df: pd.DataFrame,
         features: List[str] = None,
         target: str = None,
-        test_size: float = 0.25):
+        test_size: float = 0.25,
+    ) -> List:
         if features is None:
             X = df.iloc[:, 0:-1]
         else:
@@ -84,53 +83,70 @@ class WeightLifting():
 
         return train_test_split(X, y, test_size=test_size, random_state=RANDOM_NUM)
 
-
-    def fitAndPredict(
+    def fit_and_predict(
         self,
         X_train: pd.DataFrame,
         X_test: pd.DataFrame,
         y_train: pd.DataFrame,
         y_test: pd.DataFrame,
-        list_model: List= None) -> List:
+        list_model: List = None,
+    ) -> List:
         if list_model is None:
             list_model = [
-                ('LR', LogisticRegression(**{'C': 0.1,
-                                'fit_intercept': True,
-                                'multi_class': 'ovr',
-                                'penalty': 'l2',
-                                'solver': 'newton-cg'})),
-                ('SVM', SVC(**{'C': 10,
-                                'gamma': 1e-05,
-                                'kernel': 'rbf',
-                                'probability': True})),
-                ('MPL', MLPClassifier(**{'alpha': 0.0001,
-                                'hidden_layer_sizes': (5, 2),
-                                'solver': 'sgd'}))]
+                (
+                    "LR",
+                    LogisticRegression(
+                        **{
+                            "C": 0.1,
+                            "fit_intercept": True,
+                            "multi_class": "ovr",
+                            "penalty": "l2",
+                            "solver": "newton-cg",
+                        }
+                    ),
+                ),
+                (
+                    "SVM",
+                    SVC(
+                        **{
+                            "C": 10,
+                            "gamma": 1e-05,
+                            "kernel": "rbf",
+                            "probability": True,
+                        }
+                    ),
+                ),
+                (
+                    "MPL",
+                    MLPClassifier(
+                        **{
+                            "alpha": 0.0001,
+                            "hidden_layer_sizes": (5, 2),
+                            "solver": "sgd",
+                        }
+                    ),
+                ),
+            ]
         models_base_predict = []
         for result in list_model:
             name, model = result
             model.fit(X_train, y_train)
             predict = model.predict(X_test)
-            models_base_predict.append({
-                "name": name,
-                "model": model,
-                "predict": predict
-            })
+            models_base_predict.append(
+                {"name": name, "model": model, "predict": predict}
+            )
 
         return models_base_predict
 
-
-    def plot_results(
-        self,
-        list_predict,
-        X_test,
-        y_test):
+    def plot_results(self, list_predict, X_test, y_test):
         for result in list_predict:
             name, model, predict = result.values()
             print(f"Model: {name}")
             print(f"Accuracy: {round(accuracy_score(y_test, predict), 4)}")
             print(f"F1: {round(f1_score(y_test, predict, average='macro'), 4)}")
-            print(f"Precision: {round(precision_score(y_test, predict, average='macro'), 4)}")
+            print(
+                f"Precision: {round(precision_score(y_test, predict, average='macro'), 4)}"
+            )
             print(f"Recall: {round(recall_score(y_test, predict, average='macro'), 4)}")
             print()
             print(confusion_matrix(y_test, predict))
