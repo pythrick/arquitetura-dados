@@ -26,9 +26,11 @@ from sklearn.svm import SVC
 from numpy.random import RandomState
 import warnings
 from typing import List
+import random
 
 warnings.filterwarnings("ignore")
 
+random.seed(42)
 RANDOM_NUM = 42
 np.random.seed(42)
 RANDOM_STATE = RandomState(42)
@@ -73,22 +75,22 @@ class WeightLifting():
         if features is None:
             X = df.iloc[:, 0:-1]
         else:
-            X = df.iloc[features]
+            X = df[features]
 
         if target is None:
             y = df.iloc[:, -1:]
         else:
             y = df[target]
 
-        return train_test_split(X, y, test_size=test_size)
+        return train_test_split(X, y, test_size=test_size, random_state=RANDOM_NUM)
 
 
     def fitAndPredict(
         self,
-        X_train: pd.Series,
-        X_test: pd.Series,
-        y_train: pd.Series,
-        y_test: pd.Series,
+        X_train: pd.DataFrame,
+        X_test: pd.DataFrame,
+        y_train: pd.DataFrame,
+        y_test: pd.DataFrame,
         list_model: List= None) -> List:
         if list_model is None:
             list_model = [
@@ -113,13 +115,13 @@ class WeightLifting():
                 "name": name,
                 "model": model,
                 "predict": predict
-            })     
+            })
 
-        return models_base_predict  
+        return models_base_predict
 
 
     def plot_results(
-        self, 
+        self,
         list_predict,
         X_test,
         y_test):
@@ -137,4 +139,4 @@ class WeightLifting():
             print()
             plot_confusion_matrix(model, X_test, y_test)
             plt.show()
-            print("--------------------------------------------")        
+            print("--------------------------------------------")

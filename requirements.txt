@@ -48,3 +48,4 @@ tornado==6.0.4
 traitlets==4.3.3
 wcwidth==0.2.5
 webencodings==0.5.1
+mlxtend==0.17.3
