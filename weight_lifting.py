@@ -1,16 +1,11 @@
-# Modules import
 import csv
 
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
-from pprint import pprint
-
-from sklearn.model_selection import (
-    train_test_split,
-    GridSearchCV,
-)
+from sklearn.ensemble import IsolationForest
+from sklearn.model_selection import train_test_split
 from sklearn.metrics import (
     classification_report,
     confusion_matrix,
@@ -37,12 +32,14 @@ RANDOM_STATE = RandomState(42)
 
 
 class WeightLifting:
-    def load_df(self) -> pd.DataFrame:
+    @staticmethod
+    def load_df() -> pd.DataFrame:
         df = pd.read_csv("weight_lifting.csv", header=1)
         df.to_csv(r"outputs/original_database.csv", quoting=csv.QUOTE_NONNUMERIC)
         return df
 
-    def transform(self, df: pd.DataFrame) -> pd.DataFrame:
+    @staticmethod
+    def transform(df: pd.DataFrame) -> pd.DataFrame:
         df.drop(columns=["user_name", "cvtd_timestamp",], inplace=True)
 
         # Convertendo coluna "new_window" para booleano
@@ -64,8 +61,8 @@ class WeightLifting:
         df.to_csv(r"outputs/cleaned_database.csv", quoting=csv.QUOTE_NONNUMERIC)
         return df
 
+    @staticmethod
     def create_train_test(
-        self,
         df: pd.DataFrame,
         features: List[str] = None,
         target: str = None,
@@ -83,8 +80,8 @@ class WeightLifting:
 
         return train_test_split(X, y, test_size=test_size, random_state=RANDOM_NUM)
 
+    @staticmethod
     def fit_and_predict(
-        self,
         X_train: pd.DataFrame,
         X_test: pd.DataFrame,
         y_train: pd.DataFrame,
@@ -138,7 +135,8 @@ class WeightLifting:
 
         return models_base_predict
 
-    def plot_results(self, list_predict, X_test, y_test):
+    @staticmethod
+    def plot_results(list_predict, X_test, y_test):
         for result in list_predict:
             name, model, predict = result.values()
             print(f"Model: {name}")
@@ -156,3 +154,27 @@ class WeightLifting:
             plot_confusion_matrix(model, X_test, y_test)
             plt.show()
             print("--------------------------------------------")
+
+    @staticmethod
+    def plot_correlation_matrix(df: pd.DataFrame):
+        corr = df.corr()
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+        cax = ax.matshow(corr, cmap="coolwarm", vmin=-1, vmax=1)
+        fig.colorbar(cax)
+        ticks = np.arange(0, len(df.columns), 1)
+        ax.set_xticks(ticks)
+        plt.xticks(rotation=90)
+        ax.set_yticks(ticks)
+        ax.set_xticklabels(df.columns)
+        ax.set_yticklabels(df.columns)
+        plt.show()
+
+    @staticmethod
+    def remove_outliers(df: pd.DataFrame) -> pd.DataFrame:
+        # identify and remove outliers from dataframe
+        iso = IsolationForest(contamination=0.05, random_state=RANDOM_STATE)
+        predict = iso.fit_predict(df.iloc[:, 0:-1])
+
+        mask = predict != -1
+        return df.iloc[mask]
