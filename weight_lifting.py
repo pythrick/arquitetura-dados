@@ -129,8 +129,20 @@ class WeightLifting:
             name, model = result
             model.fit(X_train, y_train)
             predict = model.predict(X_test)
+            accuracy = round(accuracy_score(y_test, predict), 4)
+            f1 = round(f1_score(y_test, predict, average="macro"), 4)
+            precision = round(precision_score(y_test, predict, average="macro"), 4)
+            recall = round(recall_score(y_test, predict, average="macro"), 4)
             models_base_predict.append(
-                {"name": name, "model": model, "predict": predict}
+                {
+                    "name": name,
+                    "model": model,
+                    "predict": predict,
+                    "accuracy": accuracy,
+                    "f1": f1,
+                    "precision": precision,
+                    "recall": recall,
+                }
             )
 
         return models_base_predict
@@ -138,14 +150,12 @@ class WeightLifting:
     @staticmethod
     def plot_results(list_predict, X_test, y_test):
         for result in list_predict:
-            name, model, predict = result.values()
+            name, model, predict, accuracy, f1, precision, recall = result.values()
             print(f"Model: {name}")
-            print(f"Accuracy: {round(accuracy_score(y_test, predict), 4)}")
-            print(f"F1: {round(f1_score(y_test, predict, average='macro'), 4)}")
-            print(
-                f"Precision: {round(precision_score(y_test, predict, average='macro'), 4)}"
-            )
-            print(f"Recall: {round(recall_score(y_test, predict, average='macro'), 4)}")
+            print(f"Accuracy: {accuracy}")
+            print(f"F1: {f1}")
+            print(f"Precision: {precision}")
+            print(f"Recall: {recall}")
             print()
             print(confusion_matrix(y_test, predict))
             print()
