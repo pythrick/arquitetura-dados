@@ -263,7 +263,8 @@ class WeightLifting:
         resultados = df[columns]
         resultados.columns = [col.lower() for col in columns]
         resultados.to_csv("outputs/resultados.csv")
-        sns_plot = sns.heatmap(
-            resultados.pivot("name", "state", "accuracy"), annot=True, linewidths=0.5
-        )
+        pivot = resultados.pivot("name", "state", "accuracy")[
+            ["INICIAL", "ISO", "SFS", "ISO_SFS"]
+        ]
+        sns_plot = sns.heatmap(pivot, annot=True, linewidths=0.5)
         sns_plot.figure.savefig("outputs/img/results_heatmap.png")
