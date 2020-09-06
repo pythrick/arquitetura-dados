@@ -19,6 +19,7 @@ from sklearn.metrics import (
 from sklearn.linear_model import LogisticRegression
 from sklearn.neural_network import MLPClassifier
 from sklearn.svm import SVC
+from sklearn.tree import DecisionTreeClassifier
 from numpy.random import RandomState
 import warnings
 from typing import List
@@ -43,7 +44,9 @@ class WeightLifting:
 
     @staticmethod
     def transform(df: pd.DataFrame) -> pd.DataFrame:
-        df.drop(columns=["user_name", "cvtd_timestamp",], inplace=True)
+        df.drop(columns=["user_name", "cvtd_timestamp",
+                        "num_window","raw_timestamp_part_2", 
+                        "raw_timestamp_part_1"], inplace=True)
 
         # Convertendo coluna "new_window" para booleano
         df["new_window"] = np.where(df["new_window"].str.lower() == "yes", 1, 0)
@@ -118,7 +121,7 @@ class WeightLifting:
                     ),
                 ),
                 (
-                    "MPL",
+                    "MLP",
                     MLPClassifier(
                         **{
                             "alpha": 0.0001,
@@ -127,6 +130,10 @@ class WeightLifting:
                         }
                     ),
                 ),
+                (
+                    "DTC",
+                    DecisionTreeClassifier()
+                )
             ]
         models_base_predict = []
         for result in list_model:

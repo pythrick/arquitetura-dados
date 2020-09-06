@@ -1,7 +1,12 @@
+def get_dtc_features():
+    return [
+        'yaw_belt', 
+        'roll_dumbbell'
+    ]
+
 def get_lr_features():
     return [
         "new_window",
-        "num_window",
         "roll_belt",
         "pitch_belt",
         "yaw_belt",
@@ -130,10 +135,7 @@ def get_lr_features():
 
 def get_svm_features():
     return [
-        "raw_timestamp_part_1",
-        "raw_timestamp_part_2",
         "new_window",
-        "num_window",
         "pitch_belt",
         "yaw_belt",
         "total_accel_belt",
@@ -238,7 +240,6 @@ def get_svm_features():
 
 def get_mpl_features():
     return [
-        "num_window",
         "skewness_roll_belt",
         "avg_roll_belt",
         "gyros_belt_y",
