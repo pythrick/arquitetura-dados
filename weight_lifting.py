@@ -3,6 +3,7 @@ import csv
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import seaborn as sns
 
 from sklearn.ensemble import IsolationForest
 from sklearn.model_selection import train_test_split
@@ -228,6 +229,9 @@ class WeightLifting:
         def get_approach_order(row: pd.Series):
             return {"INICIAL": 0, "ISO": 1, "SFS": 2, "ISO_SFS": 3,}.get(row["state"])
 
+        def get_classifier_order(row: pd.Series):
+            return {"LR": 0, "SVM": 1, "MPL": 2,}.get(row["name"])
+
         def get_classifier(row: pd.Series):
             return {
                 "LR": "Regressão Logística",
@@ -238,11 +242,28 @@ class WeightLifting:
         df["tecnica"] = df.apply(lambda x: get_approach(x), axis=1)
         df["classificador"] = df.apply(lambda x: get_classifier(x), axis=1)
         df["ordem_tecnica"] = df.apply(lambda x: get_approach_order(x), axis=1)
-        df = df.sort_values(by=["classificador", "ordem_tecnica"])
+        df["ordem_classificador"] = df.apply(lambda x: get_classifier_order(x), axis=1)
+        df = df.sort_values(by=["ordem_classificador", "ordem_tecnica"])
         resultados_df = df[
             ["classificador", "tecnica", "accuracy", "f1", "precision", "recall"]
         ]
-        to_latex(
-            resultados_df, "outputs/tex/table_resultado_final.tex",
-        )
+        to_latex(resultados_df, "outputs/tex/table_resultado_final.tex", index=False)
         print(resultados_df)
+
+        sns.set()
+        columns = [
+            "name",
+            "state",
+            "state_name",
+            "accuracy",
+            "f1",
+            "precision",
+            "recall",
+        ]
+        resultados = df[columns]
+        resultados.columns = [col.lower() for col in columns]
+        resultados.to_csv("outputs/resultados.csv")
+        sns_plot = sns.heatmap(
+            resultados.pivot("name", "state", "accuracy"), annot=True, linewidths=0.5
+        )
+        sns_plot.figure.savefig("outputs/img/results_heatmap.png")
