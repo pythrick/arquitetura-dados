@@ -1,5 +1,6 @@
 import csv
 import sys
+from contextlib import suppress
 
 import pandas as pd
 import numpy as np
@@ -121,6 +122,22 @@ class WeightLifting:
                 df[col] = df[col].replace(np.nan, df[col].mean())
             else:
                 df[col] = df[col].replace(np.nan, "0")
+        return df
+
+    @staticmethod
+    def remove_correlated_features(df: pd.DataFrame) -> pd.DataFrame:
+        df["int_classes"] = df["classe"].astype("category").cat.codes
+
+        correlated_features = set()
+        correlation_matrix = df.corr()
+        for i in range(len(correlation_matrix.columns)):
+            for j in range(i):
+                if abs(correlation_matrix.iloc[i, j]) > 0.75:
+                    colname = correlation_matrix.columns[i]
+                    correlated_features.add(colname)
+        df.drop(columns=correlated_features, inplace=True)
+        with suppress(Exception):
+            df.drop(columns=["int_classes"], inplace=True)
         return df
 
     @staticmethod
@@ -293,12 +310,18 @@ class WeightLifting:
                 "SFS": "Sequential Feature Selector",
                 "FSE": "Feature Selection",
                 "ISO_SFS": "SFS + Floresta de Isolamento",
+                "COR": "Correlação",
             }.get(row["state"])
 
         def get_approach_order(row: pd.Series):
-            return {"INICIAL": 0, "FSE": 1, "ISO": 2, "SFS": 3, "ISO_SFS": 4,}.get(
-                row["state"]
-            )
+            return {
+                "INICIAL": 0,
+                "FSE": 1,
+                "COR": 2,
+                "ISO": 3,
+                "SFS": 4,
+                "ISO_SFS": 5,
+            }.get(row["state"])
 
         def get_classifier_order(row: pd.Series):
             return {"LR": 0, "SVM": 1, "MLP": 2, "DTC": 3}.get(row["name"])
@@ -336,7 +359,7 @@ class WeightLifting:
         resultados.columns = [col.lower() for col in columns]
         resultados.to_csv("outputs/resultados.csv")
         pivot = resultados.pivot("name", "state", "accuracy")[
-            ["INICIAL", "FSE", "ISO",]  # SFS
+            ["INICIAL", "FSE", "COR", "ISO",]  # SFS
         ]
         sns_plot = sns.heatmap(pivot, annot=True, linewidths=0.5)
         sns_plot.figure.savefig("outputs/img/results_heatmap.png")
