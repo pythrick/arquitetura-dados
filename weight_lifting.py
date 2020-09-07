@@ -1,4 +1,5 @@
 import csv
+import sys
 
 import pandas as pd
 import numpy as np
@@ -21,10 +22,12 @@ from sklearn.neural_network import MLPClassifier
 from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
 from numpy.random import RandomState
+
 import warnings
 from typing import List
 import random
 
+from features import get_initial_features, summary_features, timed_features
 from utils import to_latex
 
 warnings.filterwarnings("ignore")
@@ -49,15 +52,12 @@ class WeightLifting:
                 "user_name",
                 "cvtd_timestamp",
                 "num_window",
+                "new_window",
                 "raw_timestamp_part_2",
                 "raw_timestamp_part_1",
             ],
             inplace=True,
         )
-
-        # Convertendo coluna "new_window" para booleano
-        df["new_window"] = np.where(df["new_window"].str.lower() == "yes", 1, 0)
-        df["new_window"] = df["new_window"].astype(int)
 
         for col in df.columns[:-1]:
             # Corrigindo campos com "#DIV/0!"
@@ -65,13 +65,62 @@ class WeightLifting:
                 df[col] = df[col].str.replace("#DIV/0!", "0")
                 df[col] = df[col].astype(float)
 
+            df[col] = df[col].replace(np.nan, "0")
+
+        df.to_csv(r"outputs/cleaned_database.csv", quoting=csv.QUOTE_NONNUMERIC)
+        return df
+
+    @staticmethod
+    def select_features(df: pd.DataFrame) -> pd.DataFrame:
+        # Seleção de features iniciais
+        initial_features = get_initial_features()
+        df = df[initial_features]
+        # Seleção de colunas sem NA p/ manter apenas as features cronometradas
+        columns_without_na = df.columns[~df.isnull().all()]
+        df = df[columns_without_na]
+        return df
+
+    @staticmethod
+    def clean_data(df):
+        # Corrigindo nome das colunas
+        df.rename(columns=lambda x: x.replace("_picth", "_pitch"), inplace=True)
+        df.rename(
+            columns=lambda x: x.replace("var_total_accel_", "var_accel_"), inplace=True
+        )
+        df.rename(
+            columns=lambda x: x.replace("roll_belt.1", "pitch_belt"), inplace=True
+        )
+
+        # Mantendo apenas os dados cronometrados, descartando dados resumidos
+        df = df[df["new_window"] == "no"]
+
+        # Removendo features auxiliares
+        df.drop(
+            columns=[
+                "user_name",
+                "raw_timestamp_part_1",
+                "raw_timestamp_part_2",
+                "cvtd_timestamp",
+                "num_window",
+            ],
+            inplace=True,
+        )
+
+        # Convertendo feature "new_window" para inteiro (booleano)
+        df["new_window"] = np.where(df["new_window"].str.lower() == "yes", 1, 0)
+        df["new_window"] = df["new_window"].astype(int)
+
+        for col in df.columns[:-1]:
+            # Corrigindo campos com "#DIV/0!"
+            if df[col].dtype == object:
+                df[col] = df[col].str.replace("#DIV/0!", "0")
+                df[col] = df[col].astype(float,)
+
             # Corrigindo valores N/A com a média ou "0"
             if df[col].dtype in (int, float):
                 df[col] = df[col].replace(np.nan, df[col].mean())
             else:
                 df[col] = df[col].replace(np.nan, "0")
-
-        df.to_csv(r"outputs/cleaned_database.csv", quoting=csv.QUOTE_NONNUMERIC)
         return df
 
     @staticmethod
@@ -107,13 +156,14 @@ class WeightLifting:
                 (
                     "LR",
                     LogisticRegression(
-                        **{
-                            "C": 0.1,
-                            "fit_intercept": True,
-                            "multi_class": "ovr",
-                            "penalty": "l2",
-                            "solver": "newton-cg",
-                        }
+                        # **{
+                        #     "C": 0.1,
+                        #     "fit_intercept": True,
+                        #     "multi_class": "ovr",
+                        #     "penalty": "l2",
+                        #     "solver": "newton-cg",
+                        # },
+                        random_state=RANDOM_STATE,
                     ),
                 ),
                 (
@@ -124,7 +174,8 @@ class WeightLifting:
                             "gamma": 1e-05,
                             "kernel": "rbf",
                             "probability": True,
-                        }
+                        },
+                        random_state=RANDOM_STATE,
                     ),
                 ),
                 (
@@ -134,10 +185,16 @@ class WeightLifting:
                             "alpha": 0.0001,
                             "hidden_layer_sizes": (5, 2),
                             "solver": "sgd",
-                        }
+                        },
+                        random_state=RANDOM_STATE,
                     ),
                 ),
-                ("DTC", DecisionTreeClassifier()),
+                (
+                    "DTC",
+                    DecisionTreeClassifier(
+                        max_features="auto", max_depth=2, random_state=RANDOM_STATE
+                    ),
+                ),
             ]
         models_base_predict = []
         for result in list_model:
@@ -234,11 +291,14 @@ class WeightLifting:
                 "INICIAL": "Inicial",
                 "ISO": "Floresta de Isolamento",
                 "SFS": "Sequential Feature Selector",
+                "FSE": "Feature Selection",
                 "ISO_SFS": "SFS + Floresta de Isolamento",
             }.get(row["state"])
 
         def get_approach_order(row: pd.Series):
-            return {"INICIAL": 0, "ISO": 1, "SFS": 2, "ISO_SFS": 3,}.get(row["state"])
+            return {"INICIAL": 0, "FSE": 1, "ISO": 2, "SFS": 3, "ISO_SFS": 4,}.get(
+                row["state"]
+            )
 
         def get_classifier_order(row: pd.Series):
             return {"LR": 0, "SVM": 1, "MLP": 2, "DTC": 3}.get(row["name"])
@@ -276,7 +336,7 @@ class WeightLifting:
         resultados.columns = [col.lower() for col in columns]
         resultados.to_csv("outputs/resultados.csv")
         pivot = resultados.pivot("name", "state", "accuracy")[
-            ["INICIAL", "ISO", "SFS", "ISO_SFS"]
+            ["INICIAL", "FSE", "ISO",]  # SFS
         ]
         sns_plot = sns.heatmap(pivot, annot=True, linewidths=0.5)
         sns_plot.figure.savefig("outputs/img/results_heatmap.png")
