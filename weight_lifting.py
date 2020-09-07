@@ -237,13 +237,14 @@ class WeightLifting:
             return {"INICIAL": 0, "ISO": 1, "SFS": 2, "ISO_SFS": 3,}.get(row["state"])
 
         def get_classifier_order(row: pd.Series):
-            return {"LR": 0, "SVM": 1, "MPL": 2,}.get(row["name"])
+            return {"LR": 0, "SVM": 1, "MPL": 2,"DTC": 2}.get(row["name"])
 
         def get_classifier(row: pd.Series):
             return {
                 "LR": "Regressão Logística",
                 "SVM": "Máquina de Vetores de Suporte",
-                "MPL": "Perceptron Multicamadas",
+                "MLP": "Perceptron Multicamadas",
+                "DTC": "Árvore de Decisão",
             }.get(row["name"])
 
         df["tecnica"] = df.apply(lambda x: get_approach(x), axis=1)
