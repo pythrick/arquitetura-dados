@@ -237,7 +237,7 @@ class WeightLifting:
             return {"INICIAL": 0, "ISO": 1, "SFS": 2, "ISO_SFS": 3,}.get(row["state"])
 
         def get_classifier_order(row: pd.Series):
-            return {"LR": 0, "SVM": 1, "MPL": 2,"DTC": 2}.get(row["name"])
+            return {"LR": 0, "SVM": 1, "MLP": 2,"DTC": 2}.get(row["name"])
 
         def get_classifier(row: pd.Series):
             return {
