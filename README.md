@@ -28,3 +28,8 @@ python3 -m pip install -r requirements.txt
 ```shell script
 jupyter notebook
 ```
+
+
+## Autores
+- Brunno Oliveira - [brunno.oliveira@ufpr.br](mailto:brunno.oliveira@ufpr.br)
+- Patrick Rodrigues - [patrick.rodrigues@ufpr.br](mailto:patrick.rodrigues@ufpr.br)
