@@ -1,8 +1,6 @@
 def get_dtc_features():
-    return [
-        'yaw_belt', 
-        'roll_dumbbell'
-    ]
+    return ["yaw_belt", "roll_dumbbell"]
+
 
 def get_lr_features():
     return [

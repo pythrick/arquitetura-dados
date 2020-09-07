@@ -44,9 +44,16 @@ class WeightLifting:
 
     @staticmethod
     def transform(df: pd.DataFrame) -> pd.DataFrame:
-        df.drop(columns=["user_name", "cvtd_timestamp",
-                        "num_window","raw_timestamp_part_2", 
-                        "raw_timestamp_part_1"], inplace=True)
+        df.drop(
+            columns=[
+                "user_name",
+                "cvtd_timestamp",
+                "num_window",
+                "raw_timestamp_part_2",
+                "raw_timestamp_part_1",
+            ],
+            inplace=True,
+        )
 
         # Convertendo coluna "new_window" para booleano
         df["new_window"] = np.where(df["new_window"].str.lower() == "yes", 1, 0)
@@ -130,10 +137,7 @@ class WeightLifting:
                         }
                     ),
                 ),
-                (
-                    "DTC",
-                    DecisionTreeClassifier()
-                )
+                ("DTC", DecisionTreeClassifier()),
             ]
         models_base_predict = []
         for result in list_model:
@@ -237,13 +241,14 @@ class WeightLifting:
             return {"INICIAL": 0, "ISO": 1, "SFS": 2, "ISO_SFS": 3,}.get(row["state"])
 
         def get_classifier_order(row: pd.Series):
-            return {"LR": 0, "SVM": 1, "MPL": 2,}.get(row["name"])
+            return {"LR": 0, "SVM": 1, "MLP": 2, "DTC": 3}.get(row["name"])
 
         def get_classifier(row: pd.Series):
             return {
                 "LR": "Regressão Logística",
                 "SVM": "Máquina de Vetores de Suporte",
-                "MPL": "Perceptron Multicamadas",
+                "MLP": "Perceptron Multicamadas",
+                "DTC": "Árvore de Decisão",
             }.get(row["name"])
 
         df["tecnica"] = df.apply(lambda x: get_approach(x), axis=1)
